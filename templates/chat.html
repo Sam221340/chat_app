@@ -1,0 +1,109 @@
+{% extends 'chat_base.html' %}
+{% block title %} Chat Room {% endblock title %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-12 col-lg-6">
+            <div class="d-flex justify-content-between align-items-center">
+                <a href="{% url 'chat_home' %}" class="btn btn-primary">Home</a>
+            </div>
+            <br>
+            <div id="chat-log" class="border p-2" style="width: 500px; height: 400px;">
+                {% if messages %}
+                    {% for message in messages %}
+                        <p class="mb-0">{{ message.author }}: {{ message.content }}</p>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <br>
+            <div class="input-group">
+                <input id="chat-message-input" type="text" class="form-control" placeholder="Type a message">
+                <div class="input-group-append">
+                    <button id="chat-message-submit" class="btn btn-primary" type="button">Send</button>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-12 col-lg-6">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <label for="name" class="form-label">Name</label>
+                            {% for i in users %}
+                            <button type="button" class="btn btn-outline-primary w-100 my-2">{{ i.username }}</button>
+                            {% endfor %}
+                        </div>
+                        <div class="col-6">
+                            <label for="email" class="form-label">Email</label>
+                            {% for i in users %}
+                            <button type="button" class="btn btn-outline-primary w-100 my-2" onclick="sendJoinRequest('{{ uuid }}', '{{ i.email }}')">{{ i.email }}</button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    base_url = 'ws://' + window.location.hostname + ':' + window.location.port + '/ws/open_chat/' + "{{ uuid }}" + '/';
+    chatSocket = new WebSocket(base_url);
+
+    chatSocket.onmessage = function (event) {
+        let parsed = JSON.parse(event.data);
+        document.querySelector('#chat-log').innerHTML += '<p>' + parsed.message + '</p>';
+    }
+
+    document.querySelector('#chat-message-input').addEventListener('keyup', function (event) {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    });
+
+    document.querySelector('#chat-message-submit').onclick = function () {
+        sendMessage();
+    };
+
+    function sendMessage() {
+        const messageInputDom = document.querySelector('#chat-message-input');
+        const message = messageInputDom.value.trim();
+
+        if (message !== '') {
+            chatSocket.send(JSON.stringify({
+                'message': message
+            }));
+            messageInputDom.value = '';
+        }
+    }
+</script>
+
+<script>
+    function sendJoinRequest(groupUUID, userEmail) {
+        // Send an AJAX request to your Django backend
+
+        var confirmation = confirm("Are you sure want to send invite to this person?")
+        if (confirmation){
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/chat_room/join-group/", true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                // Request successful
+                console.log("Join request sent successfully");
+            }
+        };
+        var data = JSON.stringify({
+            "group_uuid": groupUUID,
+            "user_email": userEmail
+        });
+        xhr.send(data);
+    } else {
+        console.log("JOin request cancelled")
+        }
+    }
+</script>
+
+{% endblock content %}

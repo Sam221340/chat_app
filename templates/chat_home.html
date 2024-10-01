@@ -1,0 +1,58 @@
+{% extends 'chat_base.html' %}
+{% block content %}
+   
+    <div class="container">
+        <div class="row d-flex justify-content-between align-items-center">
+            <div class="col-12 col-md-12 col-lg-6">
+        
+                    <div class="row">
+                        <div class="col-md-8 offset-md-2">
+                            <h1 class="mt-3">Chat Page</h1>
+            
+                            {% if user.is_authenticated %}
+                                <h2 class="mt-3">Hi, {{ user.username }}!</h2>
+                                <a href="{% url 'logout' %}" class="btn btn-secondary mr-2">Log out</a>
+                                <a href="{% url 'new_group' %}" class="btn btn-secondary">New Group</a>
+                                <ul class="list-group mt-3">
+                                    {% for group in groups %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div id="{{ group.uuid }}">
+                                                <a href="{% url 'open_chat' uuid=group.uuid %}">{{ group.name }}</a>
+                                            </div>
+                                            {% if request.user in group.members.all %}
+                                                <div>
+                                                    <a href="{% url 'open_chat' uuid=group.uuid %}" class="btn btn-primary btn-sm">Open</a>
+                                                    <a href="{% url 'leave_group' uuid=group.uuid %}" class="btn btn-danger btn-sm">Leave</a>
+                                                    {% if request.user.id == group.created_by.id %}
+                                                    <a href="{% url 'remove_group' uuid=group.uuid %}" class="btn btn-warning btn-sm">Delete</a>
+                                                    {% endif %}
+            
+                                                </div>
+                                            {% else %}
+                                                <div>
+                                                    <a href="{% url 'join_group' uuid=group.uuid %}" class="btn btn-success btn-sm">Join</a>
+                                                </div>
+                                            {% endif %}
+                                            
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+            
+                            {% else %}
+                                <div class="mt-3">
+                                    <h2>You need to login first </h2>
+                                    <a href="{% url 'login' %}" class="btn btn-secondary mr-2">Log in</a>
+                                    OR
+                                    <a href="{% url 'signup' %}" class="btn btn-info">Sign up</a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                
+            </div>
+         
+        </div>
+    </div>
+
+   
+{% endblock content %}
